@@ -1,10 +1,8 @@
+import bisect
 from pydantic import BaseModel
 from typing import List, Dict
-
 from starlette.responses import JSONResponse
-
-from models.interval import Interval, sort_intervals  # Import the Interval model
-
+from models.interval import Interval  # Import the Interval model
 import logging
 
 # Initialize the logger
@@ -17,46 +15,58 @@ class Histogram(BaseModel):
     sample_variance: float = 0.0
     outliers: List[float] = []
 
-    # adding a new interval
     def add_interval(self, start: float, end: float):
-        # Create a flag to track if there's an overlap
-        has_overlap = False
+        # Create a new interval
+        new_interval = Interval(start=start, end=end)
 
-        # Iterate through existing intervals
-        for existing_interval in self.intervals:
-            if start < existing_interval.end and end > existing_interval.start:
-                # Overlap detected; set the flag and log the error
-                has_overlap = True
-                logger.error(
-                    f"Overlapping interval detected: [{start}, {end}) with existing interval "
-                    f"[{existing_interval.start}, {existing_interval.end}).")
+        # finding the insertion point for the new interval using binary search
+        index = bisect.bisect_left(self.intervals, new_interval)
 
-        # Only add the new interval if there was no overlap
-        if not has_overlap:
-            new_interval = Interval(start=start, end=end)
-            self.intervals.append(new_interval)
+        # Check if the new interval overlaps with adjacent intervals
+        if (index > 0 and new_interval.start < self.intervals[index - 1].end) or (
+            index < len(self.intervals) and new_interval.end > self.intervals[index].start
+        ):
+            logger.error(
+                f"Overlapping interval detected: [{start}, {end}) with existing interval(s)."
+            )
+        else:
+            # insert the new interval at the correct position to maintain sorting
+            self.intervals.insert(index, new_interval)
 
     def insert_samples(self, samples: List[float]):
         if not self.intervals:
-            # No intervals defined, treat all samples as outliers
+            # no intervals defined yet, treat all samples as outliers
             self.outliers.extend(samples)
             return
 
+        # Create a sorted list of interval start values for binary search
+        start_values = [interval.start for interval in self.intervals]
+
         for sample in samples:
-            matched_interval = None
-            for interval in self.intervals:
-                if interval.start <= sample < interval.end:
-                    interval.counts += 1
-                    matched_interval = interval
-                    break
-            if not matched_interval:
-                # Sample did not fall within any interval, consider it an outlier
-                self.outliers.append(sample)
+            # use bisect_left to find the index where the sample should be inserted
+            index = bisect.bisect_left(start_values, sample)
+
+            if index > 0:
+                # Check the previous interval for containment
+                prev_interval = self.intervals[index - 1]
+                if prev_interval.start <= sample < prev_interval.end:
+                    prev_interval.counts += 1
+                    continue
+
+            if index < len(self.intervals):
+                # Check the next interval for containment
+                next_interval = self.intervals[index]
+                if next_interval.start <= sample < next_interval.end:
+                    next_interval.counts += 1
+                    continue
+
+            # Sample did not fall within any interval, consider it an outlier
+            self.outliers.append(sample)
 
     def calculate_metrics(self):
 
         result = {
-            "intervals": [interval.to_dict() for interval in sort_intervals(self.intervals)],
+            "intervals": [interval.to_dict() for interval in self.intervals],
             "sample_mean": 0.0,
             "sample_variance": 0.0,
             "outliers": sorted(self.outliers),

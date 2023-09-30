@@ -1,21 +1,18 @@
 import os
 import logging
-from typing import List
-from fastapi.responses import JSONResponse
 
 from read_inputs import read_intervals_and_samples
 from fastapi import FastAPI
 from models.histogram import Histogram
 from dotenv import load_dotenv
 
+# setting the log level to debug.
 logging.basicConfig(level=logging.DEBUG)
 
-# import the fast api class.
 load_dotenv()  # loading the .env file
+# creates the fast api instance, its name would be app.
 app = FastAPI()
 
-
-# creates the fast api instance, its name would be app.
 # This app instance of fast api will be used to create the end points.
 
 
@@ -27,7 +24,7 @@ app = FastAPI()
 
 @app.get("/")
 async def read_root():
-    return {"message": "Welcome to the Histogram Service!"}
+    return {"message": "Welcome to the Histogram App!"}
 
 
 histogram = Histogram()  # creating the instance globally
@@ -38,22 +35,6 @@ def print_histogram_info(intervals, samples):
     # Print the intervals and samples
     print("Intervals:", intervals)
     print("Samples:", samples)
-
-
-@app.get("/insert-samples")
-async def insert_samples_endpoint():
-    if len(inputs) == 0:
-        return {"message": "Histogram is not initialised yet!"}
-    # Insert the sample data into the histogram
-    histogram.insert_samples(inputs['samples'])
-    print("Printing Histogram in insert samples method", histogram)
-    return {"message": "Samples inserted successfully"}
-
-
-@app.get("/metrics")
-async def metrics():
-    print("Printing histogram in metrics method", histogram)
-    return histogram.calculate_metrics()
 
 
 @app.get("/initialize")
@@ -80,6 +61,23 @@ async def initialize():
             histogram.add_interval(start, end)
         logging.info("Intervals have been loaded into the histogram!")
         return {"message": "Histogram initialized with intervals successfully"}
+
+
+@app.get("/insert-samples")
+async def insert_samples_endpoint():
+    if len(inputs) == 0:
+        # if length of inputs hash is zero, means histogram has not been initialized yet!
+        return {"message": "Histogram is not initialised yet!"}
+    # Insert the sample data into the histogram
+    histogram.insert_samples(inputs['samples'])
+    print("State of Histogram after insertion of samples ", histogram)
+    return {"message": "Samples inserted successfully"}
+
+
+@app.get("/metrics")
+async def metrics():
+    print("Printing histogram in metrics method", histogram)
+    return histogram.calculate_metrics()
 
 
 def main():

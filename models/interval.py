@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import List
 
 
 class Interval(BaseModel):
@@ -7,9 +6,11 @@ class Interval(BaseModel):
     end: float
     counts: int = 0
 
+    # adding to_dict method to serialize the interval object while rendering the response.
     def to_dict(self):
         return {"start": self.start, "end": self.end, "counts": self.counts}
 
+    # adding less than custom comparator for comparing two intervals.
+    def __lt__(self, other):
+        return self.start < other.start
 
-def sort_intervals(self: List[Interval]) -> List[Interval]:
-    return sorted(self, key=lambda interval: interval.start)
