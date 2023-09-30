@@ -1,4 +1,12 @@
 # histogram-app
+Project Setup
+* To create a virtual environment
+   * `python3 -m venv myenv`
+* Source the current venv
+   * `source myenv/bin/activate`
+* Install all the dependencies in this virtual environment
+   * `pip install -r requirements.txt`
+
 Steps to run this application
 * There is a file named `sample.txt` in the project directory.
 * Input the data for intervals and sample to be binned.
