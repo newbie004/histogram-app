@@ -64,9 +64,8 @@ Steps to run this application
 * Add thread safety test file in `/tests`.
 * To test the thread safety, run -> `python -m unittest tests.test_thread_safety` 
 * Output if the thread safety test passes
-  * ``` json
+  ``` json
     Ran 1 test in 0.000s
-
     OK
   ```
 
