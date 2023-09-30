@@ -1,9 +1,10 @@
 import threading
 import unittest
-from models.histogram import Histogram  # Import your Histogram class
-from read_inputs import read_intervals_and_samples  # Import any necessary functions
+from models.histogram import Histogram
+from read_inputs import read_intervals_and_samples
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -30,8 +31,7 @@ class ThreadSafety(unittest.TestCase):
             end_idx = (i + 1) * (len(samples) // num_threads)
 
             thread = threading.Thread(
-                target=self.insert_samples,
-                args=(samples[start_idx:end_idx],)
+                target=self.insert_samples, args=(samples[start_idx:end_idx],)
             )
             threads.append(thread)
 
