@@ -42,6 +42,8 @@ def print_histogram_info(intervals, samples):
 
 @app.get("/insert-samples")
 async def insert_samples_endpoint():
+    if len(inputs) == 0:
+        return {"message": "Histogram is not initialised yet!"}
     # Insert the sample data into the histogram
     histogram.insert_samples(inputs['samples'])
     print("Printing Histogram in insert samples method", histogram)
@@ -54,7 +56,8 @@ async def metrics():
     return histogram.calculate_metrics()
 
 
-def main():
+@app.get("/initialize")
+async def initialize():
     # Load intervals and samples from the file
     input_file_path = os.getenv("INPUT_FILE_PATH")
 
@@ -76,7 +79,10 @@ def main():
             start, end = interval
             histogram.add_interval(start, end)
         logging.info("Intervals have been loaded into the histogram!")
+        return {"message": "Histogram initialized with intervals successfully"}
 
+
+def main():
     # Run the FastAPI app
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
