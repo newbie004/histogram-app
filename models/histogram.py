@@ -1,6 +1,9 @@
 from pydantic import BaseModel
 from typing import List, Dict
-from models.interval import Interval  # Import the Interval model
+
+from starlette.responses import JSONResponse
+
+from models.interval import Interval, sort_intervals  # Import the Interval model
 
 import logging
 
@@ -33,7 +36,6 @@ class Histogram(BaseModel):
             new_interval = Interval(start=start, end=end)
             self.intervals.append(new_interval)
 
-    # method to insert samples falling in the existing intervals
     def insert_samples(self, samples: List[float]):
         if not self.intervals:
             # No intervals defined, treat all samples as outliers
@@ -52,37 +54,40 @@ class Histogram(BaseModel):
                 self.outliers.append(sample)
 
     def calculate_metrics(self):
+
+        result = {
+            "intervals": [interval.to_dict() for interval in sort_intervals(self.intervals)],
+            "sample_mean": 0.0,
+            "sample_variance": 0.0,
+            "outliers": sorted(self.outliers),
+        }
+
         if not self.intervals:
-            return "", "sample mean: 0.0", "sample variance: 0.0", "outliers:"
+            return result
 
         counts_in_intervals = [interval.counts for interval in self.intervals]
 
         if not counts_in_intervals:
-            return "", "sample mean: 0.0", "sample variance: 0.0", "outliers:"
+            return JSONResponse(content=result)
 
         sample_count = sum(counts_in_intervals)
         if sample_count == 0:
-            return "", "sample mean: 0.0", "sample variance: 0.0", "outliers:"
+            return JSONResponse(content=result)
 
         # Calculate sample mean
-        total_sum = sum(sample_count * [interval.counts for interval in self.intervals])
-        self.sample_mean = total_sum / sample_count
+        mean_sum = 0.0
+        for count, interval in zip(counts_in_intervals, self.intervals):
+            mean_sum += count * ((interval.start + interval.end) / 2)
+
+        self.sample_mean = mean_sum / sample_count
+        result["sample_mean"] = round(self.sample_mean, 2)
 
         # Calculate sample variance
-        squared_diffs = [(count - self.sample_mean) ** 2 for count in counts_in_intervals]
-        self.sample_variance = sum(squared_diffs) / (sample_count - 1)
+        squared_diffs = 0.0
+        for count, interval in zip(counts_in_intervals, self.intervals):
+            squared_diffs += count * ((interval.start + interval.end) / 2 - self.sample_mean) ** 2
+        self.sample_variance = squared_diffs / (sample_count - 1)
 
-        # Find outliers
-        self.outliers = [sample for sample in self.outliers if
-                         abs(sample - self.sample_mean) > 2 * self.sample_variance]
+        result["sample_variance"] = round(self.sample_variance, 2)
 
-        # Build interval strings
-        interval_strings = [f"[{interval.start}, {interval.end}): {interval.counts}" for interval in self.intervals]
-
-        # Build the final output
-        metrics_output = "\n".join(interval_strings) + "\n\n"
-        metrics_output += f"sample mean: {self.sample_mean:.3f}\n"
-        metrics_output += f"sample variance: {self.sample_variance:.3f}\n"
-        metrics_output += "outliers: " + ", ".join([f"{outlier:.2f}" for outlier in self.outliers])
-
-        return metrics_output
+        return JSONResponse(content={"result": result})

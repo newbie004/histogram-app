@@ -26,5 +26,4 @@ def read_intervals_and_samples(file_path):
                     except ValueError:
                         # Handle invalid values or non-float lines
                         pass
-
     return intervals, samples
