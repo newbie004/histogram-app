@@ -20,7 +20,8 @@ Steps to run this application
     * This api will compute and return the mean and variance for the histogram data.
     * END POINT [GET] - http://localhost:8000/metrics
     * Response -> 
-      * {
+  ``` json
+    {
       "result": {
           "intervals": [
               {
@@ -54,4 +55,5 @@ Steps to run this application
               41.27
           ]
       }
-      }
+    }
+  ```
