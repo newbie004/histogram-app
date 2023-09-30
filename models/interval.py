@@ -13,4 +13,3 @@ class Interval(BaseModel):
     # adding less than custom comparator for comparing two intervals.
     def __lt__(self, other):
         return self.start < other.start
-

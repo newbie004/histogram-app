@@ -24,7 +24,8 @@ class Histogram(BaseModel):
 
         # Check if the new interval overlaps with adjacent intervals
         if (index > 0 and new_interval.start < self.intervals[index - 1].end) or (
-            index < len(self.intervals) and new_interval.end > self.intervals[index].start
+            index < len(self.intervals)
+            and new_interval.end > self.intervals[index].start
         ):
             logger.error(
                 f"Overlapping interval detected: [{start}, {end}) with existing interval(s)."
@@ -64,7 +65,6 @@ class Histogram(BaseModel):
             self.outliers.append(sample)
 
     def calculate_metrics(self):
-
         result = {
             "intervals": [interval.to_dict() for interval in self.intervals],
             "sample_mean": 0.0,
@@ -95,7 +95,9 @@ class Histogram(BaseModel):
         # Calculate sample variance
         squared_diffs = 0.0
         for count, interval in zip(counts_in_intervals, self.intervals):
-            squared_diffs += count * ((interval.start + interval.end) / 2 - self.sample_mean) ** 2
+            squared_diffs += (
+                count * ((interval.start + interval.end) / 2 - self.sample_mean) ** 2
+            )
         self.sample_variance = squared_diffs / (sample_count - 1)
 
         result["sample_variance"] = round(self.sample_variance, 2)
