@@ -58,5 +58,5 @@ Steps to run this application
     }
   ```
   
-* Added black dependency to check and correct any formatting error 
-* Command to run black -> `black .`
+* Added black dependency to check and correct any formatting errors in the current project directory.
+   * Command to run black -> `black .`
