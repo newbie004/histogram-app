@@ -57,3 +57,6 @@ Steps to run this application
       }
     }
   ```
+  
+* Added black dependency to check and correct any formatting error 
+* Command to run black -> `black .`
